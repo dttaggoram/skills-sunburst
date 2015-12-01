@@ -1,6 +1,9 @@
+var windowheight = screen.height;
+var windowwidth = screen.width;
+
 function initchart() {
     var data = {
-        _proficiency: [0, 0, 0, 0, 0, 0],
+        _proficiency: [0, 0, 0, 0, 0],
         children: null,
         value: 0,
         key: "",
@@ -191,8 +194,8 @@ var chart = function (d3) {
         chart.refreshChart = refreshChart;
         return chart;
     }(d3),
-    width = 580,
-    height = 580,
+    width = windowwidth/2,
+    height = windowheight,
     rad = Math.min(width, height) / Math.PI - 25,
     q = k,
     r = {
