@@ -1,6 +1,5 @@
-var windowheight = screen.height;
-var windowwidth = screen.width;
-
+var windowheight = window.innerHeight;
+var windowwidth = window.innerWidth;
 function initchart() {
     var data = {
         _proficiency: [0, 0, 0, 0, 0],
@@ -20,7 +19,11 @@ function mouseover(data) {
         .style("opacity", .3), sunburst
         .selectAll("path")
         .filter(function (a) { return c.indexOf(a) >= 0 })
-        .style("opacity", 1)
+        .style("opacity", 1);
+
+    d3
+        .select("#skills-chart-breadcrumb")
+        .style("visibility", "");
 }
 function mouseleave() {
     d3
@@ -29,9 +32,13 @@ function mouseleave() {
     d3
         .selectAll("path")
         .transition()
-        .duration(1e3)
+        .duration(0)
         .style("opacity", 1)
-        .each("end", function () { d3.select(this).on("mouseover", mouseover) })
+        .each("end", function () { d3.select(this).on("mouseover", mouseover) });
+    d3
+        .select("#skills-chart-breadcrumb")
+        .style("visibility", "hidden");
+        initchart();
 }
 function getcrumbpath(a) {
     for (var temp = [], c = a; c.parent;) temp.unshift(c), c = c.parent;
@@ -41,7 +48,7 @@ function initbreadcrumb() {
     d3
         .select("#skills-chart-breadcrumb")
         .append("svg:svg")
-        .attr("width", 500)
+        .attr("width", windowwidth*0.8)
         .attr("height", 50)
         .attr("class", "trail")
 }
@@ -120,7 +127,7 @@ var chart = function (d3) {
             .attr("transform", "translate(0," + h + ")")
             .call(bottomtick)
             .append("text")
-            .attr("x", 450)
+            .attr("x", windowwidth*0.3)
             .attr("y", -8)
             .style("text-anchor", "end")
             .text("Time"), cpath
@@ -152,13 +159,13 @@ var chart = function (d3) {
     }
     var chart = {},
         rect = {
-            top: 20,
-            right: 20,
-            bottom: 30,
+            top: 50,
+            right: 50,
+            bottom: 50,
             left: 50
         },
-        g = 500 - rect.left - rect.right,
-        h = 400 - rect.top - rect.bottom,
+        g = windowwidth*0.4 - rect.left - rect.right,
+        h = windowheight*0.5 - rect.top - rect.bottom,
         i = [1,2,3,4,5],
         j = d3.scale.linear().range([0, g]),
         k = d3.scale.linear().range([h, 0]),
@@ -194,12 +201,12 @@ var chart = function (d3) {
         chart.refreshChart = refreshChart;
         return chart;
     }(d3),
-    width = windowwidth/2,
-    height = windowheight,
+    width = windowwidth*0.6,
+    height = width,
     rad = Math.min(width, height) / Math.PI - 25,
     q = k,
     r = {
-        w: 116,
+        w: windowwidth*0.7*0.25,
         h: 30,
         s: 3,
         t: 7
@@ -266,19 +273,62 @@ path
 path.
     append("svg:text")
     .attr("transform", function (a) {
-        var r = 180 * ((a.x + a.dx / 2 - Math.PI / 2) / Math.PI);
-        return "rotate(" + r + ")"
+        var r = 180 * ((a.x + a.dx / 2 - Math.PI / 2) / Math.PI) + 90 ;
+        if (r > 90 && r < 270) {
+            r = r + 180;
+        }
+        return "rotate(" + r + ")";
     })
-    .attr("x", function (a) { return rad / Math.PI * a.depth})
-    .attr("dx", "6").attr("dy", ".1em").text(function (a) { return a.key })
+
+    //.attr("x", function (a) { return rad / Math.PI * a.depth})
+    //.attr("dx", "6")
+    //.text(function (a) { return a.key })
     .attr("display", function (a) { return a.children ? null : "none" })
-    .on("mouseover", mouseover); 
+    .attr("text-anchor","middle")
+    .on("mouseover", mouseover)
+    .each(function(d) {
+    // split name by space and -
+    var n = d.key.replace("-","- ").split(" ");
+    // get the current element
+    var text = d3.select(this)
+
+    // now loop for top half
+    var r = 180 * ((d.x + d.dx / 2 - Math.PI / 2) / Math.PI) + 90;
+    for (var i = 0; i < n.length; i++) {
+        if (r > 90 && r <270) {       
+            text.append("tspan")
+                .attr('x', 0)
+                .attr("y", function (d) {
+                    return ( rad / Math.PI * d.depth ) + 20 + 12*i
+                })
+                .text(n[i])    
+        }
+        else {
+            text.append("tspan")
+                .attr('x', 0)
+                .attr("y", function (d) {
+                    return -( rad / Math.PI * d.depth ) - 20 - 12*i
+                })
+                .text(n[n.length-1-i])
+        }
+    }     
+});
+
+
+
 d3
     .select(".skills-sunburst")
     .on("mouseleave", mouseleave); 
+initchart();
 l = path.node().__data__.value; 
+
 sunburst
     .append("circle")
     .attr("r", rad / Math.PI)
     .attr("opacity", 0);
-initchart();
+
+
+$("#name").text(detailsdata["Details"]["Name"]);
+$("#cohort").text(detailsdata["Details"]["Cohort"]);
+$("#about").text(detailsdata["Details"]["About"]);
+$("#information").width(windowwidth*0.4);
